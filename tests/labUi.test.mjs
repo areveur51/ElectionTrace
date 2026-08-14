@@ -10,6 +10,17 @@ const css = readFileSync(join(root, "app/public/styles.css"), "utf8");
 const html = readFileSync(join(root, "app/public/index.html"), "utf8");
 const proof = readFileSync(join(root, "app/public/proof.mjs"), "utf8");
 
+test("unmapped map note is a lab callout with count, copy, and dismiss", () => {
+  assert.match(html, /id="unmapped-note"/);
+  assert.match(js, /function fillUnmappedNote\(/);
+  assert.match(js, /No usable map point/);
+  assert.match(js, /Still scanned and can still be flagged/);
+  assert.match(js, /no pin on the map/);
+  assert.match(js, /data-dismiss-unmapped/);
+  assert.match(css, /\.map-note\s*\{/);
+  assert.match(css, /\.map-note-stat/);
+});
+
 test("Precinct lab state dropdown is sorted alphabetically by name", () => {
   assert.match(js, /function fillFilters\(/);
   assert.match(js, /localeCompare\(String\(b\.name/);
@@ -76,6 +87,11 @@ test("proof of work is DRY and opens JSON in a popup", () => {
   assert.match(js, /function openJsonProof\(/);
   assert.match(js, /highlightJson\(/);
   assert.match(js, /digestHtml\(packet\.sha256\)/);
+  assert.match(js, /reproduceHtml\(packet\)/);
+  assert.match(html, /id="json-modal-repro"/);
+  assert.match(html, /id="reproduce"/);
+  assert.match(html, /Reproduce a proof/);
+  assert.match(css, /\.json-repro/);
   assert.doesNotMatch(js, /copy-table-workup/);
   assert.doesNotMatch(js, /id="copy-workup"/);
   assert.doesNotMatch(proof, /Copy JSON/);

@@ -78,6 +78,7 @@
           <h2>Precinct lab</h2>
           <p>Flagged precincts on the extract. Pick a method, then a row or a map point.</p>
         </header>
+        <aside id="unmapped-note" class="map-note hidden" hidden></aside>
         <aside class="type-board lab-method-board" id="lab-method-switch" role="tablist"></aside>
         <div id="lab-method-explain" class="lab-method-explain"></div>
         <div class="lab-toolbar">
@@ -157,6 +158,44 @@
         </header>
         <aside class="lab-method-board" id="method-switch" role="tablist"></aside>
         <div id="method-pane" class="method-catalog"></div>
+        <details class="reproduce-details" id="reproduce">
+          <summary>Reproduce a proof</summary>
+          <div class="reproduce-body">
+            <p>
+              The SHA-256 on <strong>View JSON</strong> is a checksum of that detector packet
+              (the published numbers used, the thresholds, and the pass/fail checks).
+              It is not a hash of the NYT GeoJSON, and it does not certify the detectors.
+              Same extract, same item, same workup → same SHA.
+            </p>
+            <ol>
+              <li>
+                Clone the repo, fetch the
+                <a href="https://github.com/areveur51/ElectionTrace/releases/tag/data-2020">data-2020</a>
+                pack, and start the app:
+                <pre><code>git clone https://github.com/areveur51/ElectionTrace.git
+cd ElectionTrace
+npm install
+./scripts/fetch-data.sh
+npm start</code></pre>
+              </li>
+              <li>
+                Precinct: open the same GEOID, or
+                <code>GET /api/precincts/&lt;GEOID&gt;/workup</code>, and compare the
+                <code>sha256</code> field. Do not hash the downloaded file as a whole —
+                that JSON already contains the digest.
+              </li>
+              <li>
+                Night-of / In the files: open the same card, click View JSON, and compare
+                <code>sha256</code>. Those packets hash the night-file inputs and checks,
+                not the raw state JSON bytes.
+              </li>
+            </ol>
+            <p class="page-note">
+              Written steps:
+              <a href="https://github.com/areveur51/ElectionTrace/blob/main/docs/REPRODUCE.md">docs/REPRODUCE.md</a>.
+            </p>
+          </div>
+        </details>
         <div class="board-main">
             <details class="benford-details" open>
               <summary>State first-digit check (Benford)</summary>
@@ -186,6 +225,7 @@
           <button type="button" class="page-btn" id="json-modal-close"><svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>Close</button>
         </div>
         <div id="json-modal-sha" class="json-sha"></div>
+        <div id="json-modal-repro" class="json-repro-slot"></div>
         <pre id="json-modal-pre" class="json-pre"></pre>
         <div class="json-modal-actions">
           <button type="button" class="page-btn" id="json-modal-copy"><svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="7" height="8" rx="1"/><path d="M3.5 10.5V3.5h7"/></svg>Copy</button>

@@ -6,6 +6,7 @@ import {
   highlightJson,
   renderProofBody,
   renderProofFold,
+  reproduceHtml,
   tokenizeRule,
 } from "../app/public/proof.mjs";
 
@@ -54,6 +55,29 @@ test("proof body has one View JSON button and no inline copy/download", () => {
   );
   assert.match(fold, />Proof of work</);
   assert.doesNotMatch(fold, /abc123def456/);
+});
+
+test("reproduce fold tells how to re-check a precinct SHA", () => {
+  const html = reproduceHtml({
+    kind: "electiontrace.workup",
+    geoid: "42001002000",
+    sha256: "abc",
+  });
+  assert.match(html, /Check this SHA/);
+  assert.match(html, /checksum of this detector packet/);
+  assert.match(html, /\/api\/precincts\/42001002000\/workup/);
+  assert.match(html, /Do not hash the downloaded JSON as a whole/);
+  assert.match(html, /href="#reproduce"/);
+});
+
+test("reproduce fold for night-of does not invent a precinct URL", () => {
+  const html = reproduceHtml({
+    kind: "electiontrace.feed-workup",
+    label: "Pennsylvania",
+    type: "count_retraction",
+  });
+  assert.match(html, /Night-of or In-the-files/);
+  assert.doesNotMatch(html, /\/api\/precincts\//);
 });
 
 test("highlights JSON keys, strings, numbers, and keywords", () => {

@@ -37,6 +37,8 @@ Override the URL if needed: `./scripts/fetch-data.sh https://…/electiontrace-d
 
 Restart the app so it reindexes.
 
+To re-check a proof SHA after you have the pack: [`REPRODUCE.md`](REPRODUCE.md).
+
 ## Docker
 
 ```bash

@@ -96,6 +96,8 @@ Every rule is listed in the app under **Methods** and in `app/lib/methods.mjs`. 
 
 Over-time rules (`vote_transfer`, `count_retraction`, `one_sided_increment`) stay quiet unless the Feature has `votes_*_prev` or a `history` array.
 
+The SHA-256 on **View JSON** is a checksum of that detector packet. How to re-run it: [`docs/REPRODUCE.md`](docs/REPRODUCE.md).
+
 ## HTTP API
 
 | | |
@@ -138,6 +140,7 @@ media/sample/         tiny demo (committed)
 media/                your extract (not committed)
 data/                 generated index (not committed)
 docs/DATA.md          how to publish / fetch a data pack
+docs/REPRODUCE.md     how to re-check a proof SHA
 docs/screenshots/     README captures
 ```
 

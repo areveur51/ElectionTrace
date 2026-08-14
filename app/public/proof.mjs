@@ -207,6 +207,38 @@ export function digestHtml(sha) {
   return `<p class="digest"><span class="digest-label">SHA-256</span> <code>${escapeHtml(sha)}</code></p>`;
 }
 
+/** Walkthrough for the JSON modal: same extract → same item → same SHA. */
+export function reproduceHtml(packet = {}) {
+  const kind = String(packet.kind || "");
+  const geoid = packet.geoid ? String(packet.geoid) : "";
+  const isPrecinct = kind === "electiontrace.workup" || Boolean(geoid);
+  const api = geoid ? `/api/precincts/${encodeURIComponent(geoid)}/workup` : "";
+  const lead = isPrecinct
+    ? "This SHA-256 is a checksum of this detector packet (votes used, thresholds, pass/fail checks) — not of the NYT file."
+    : "This SHA-256 is a checksum of this detector packet (rule inputs and checks) — not of the night-file bytes.";
+  const steps = isPrecinct
+    ? [
+        "Clone ElectionTrace, run <code>./scripts/fetch-data.sh</code>, then <code>npm start</code>.",
+        geoid
+          ? `Request <code>GET ${escapeHtml(api)}</code>.`
+          : "Request <code>GET /api/precincts/&lt;GEOID&gt;/workup</code> for this precinct.",
+        "Compare the <code>sha256</code> field to the digest above. Do not hash the downloaded JSON as a whole — that file already contains the digest.",
+      ]
+    : [
+        "Clone ElectionTrace, run <code>./scripts/fetch-data.sh</code>, then <code>npm start</code>.",
+        "Open the same Night-of or In-the-files item and click View JSON again.",
+        "Compare the <code>sha256</code> field. Same extract and same detectors produce the same digest.",
+      ];
+  return `<details class="json-repro">
+    <summary>Check this SHA</summary>
+    <div class="json-repro-body">
+      <p>${lead}</p>
+      <ol>${steps.map((s) => `<li>${s}</li>`).join("")}</ol>
+      <p class="json-repro-more">Full walkthrough: <a href="#reproduce">Methods → Reproduce a proof</a>.</p>
+    </div>
+  </details>`;
+}
+
 export function shortDigest(sha, n = 12) {
   if (!sha) return "";
   return `<code class="digest-inline">${escapeHtml(String(sha).slice(0, n))}…</code>`;

@@ -1,6 +1,7 @@
 import {
   digestHtml,
   escapeHtml,
+  reproduceHtml,
   formatRuleHtml,
   highlightJson,
   jsonProofButton,
@@ -85,6 +86,59 @@ function showBanner(text, err) {
   el.textContent = text;
   el.classList.toggle("err", Boolean(err));
   el.classList.remove("hidden");
+}
+
+function noteDismissed() {
+  try {
+    return sessionStorage.getItem("et-unmapped-note") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function dismissUnmappedNote() {
+  try {
+    sessionStorage.setItem("et-unmapped-note", "1");
+  } catch {
+    /* ignore quota / private mode */
+  }
+  fillUnmappedNote(0, 0);
+}
+
+function fillUnmappedNote(unmapped, total) {
+  const el = $("unmapped-note");
+  if (!el) return;
+  if (!unmapped || noteDismissed()) {
+    el.classList.add("hidden");
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
+  const pct = total ? Math.round((unmapped / total) * 100) : 0;
+  const of = total ? `of ${fmt(total)}` : "";
+  const share = total ? `~${pct}%` : "";
+  el.hidden = false;
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <span class="map-note-icon" aria-hidden="true">
+      <svg viewBox="0 0 16 16">
+        <path d="M8 8.8a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2z"/>
+        <path d="M8 14.2s5-3.4 5-7.1A5 5 0 0 0 3 7.1c0 3.7 5 7.1 5 7.1z"/>
+        <path d="M3.2 12.8 12.8 3.2"/>
+      </svg>
+    </span>
+    <div class="map-note-stat">
+      <strong>${fmt(unmapped)}</strong>
+      <span>${of}${share ? ` · ${share}` : ""}</span>
+    </div>
+    <div class="map-note-copy">
+      <p class="map-note-title">No usable map point</p>
+      <p>Still scanned and can still be flagged. They have no pin on the map.</p>
+    </div>
+    <button type="button" class="map-note-dismiss" data-dismiss-unmapped aria-label="Dismiss map-point note">
+      <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+    </button>`;
+  el.querySelector("[data-dismiss-unmapped]")?.addEventListener("click", dismissUnmappedNote);
 }
 
 async function getJson(url) {
@@ -1403,6 +1457,8 @@ function openJsonProof(key) {
   }
   const sha = $("json-modal-sha");
   if (sha) sha.innerHTML = digestHtml(packet.sha256);
+  const repro = $("json-modal-repro");
+  if (repro) repro.innerHTML = reproduceHtml(packet);
   pre.innerHTML = highlightJson(text);
   const copyBtn = $("json-modal-copy");
   if (copyBtn) copyBtn.textContent = "Copy";
@@ -1964,10 +2020,7 @@ async function boot() {
     state.summary = await getJson("/api/summary");
     state.methods = state.summary.methods || [];
     if (state.summary.candidates) state.candidates = state.summary.candidates;
-    const unmapped = state.summary.unmapped || 0;
-    if (unmapped) {
-      showBanner(`${fmt(unmapped)} precincts have no usable map point.`);
-    }
+    fillUnmappedNote(state.summary.unmapped || 0, state.summary.precincts || 0);
     fillFilters();
     fillCoverage();
     fillBenford();
@@ -1986,6 +2039,7 @@ async function boot() {
 
 function currentSection() {
   const h = (location.hash || "#coverage").replace("#", "");
+  if (h === "reproduce") return "methods";
   return ["coverage", "files", "patterns", "lab", "methods"].includes(h) ? h : "coverage";
 }
 
@@ -1997,6 +2051,15 @@ function showSection(id) {
   });
   if (next !== "lab") closeDetailDrawer();
   if (next === "lab") setTimeout(() => map.invalidateSize(), 80);
+  const repro = $("reproduce");
+  if (repro) {
+    const openRepro = next === "methods" && (location.hash || "") === "#reproduce";
+    if (openRepro) {
+      repro.open = true;
+      closeJsonProof();
+      setTimeout(() => repro.scrollIntoView({ block: "start" }), 50);
+    }
+  }
 }
 
 function openFileOnly(fips) {
@@ -2047,7 +2110,10 @@ $("state").addEventListener("change", () => {
   refresh();
 });
 
-window.addEventListener("hashchange", () => showSection(currentSection()));
+window.addEventListener("hashchange", () => {
+  if (isJsonProofOpen()) closeJsonProof();
+  showSection(currentSection());
+});
 
 $("chart-modal-close")?.addEventListener("click", closeTimePopup);
 $("chart-modal")?.addEventListener("click", (e) => {
