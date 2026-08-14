@@ -265,9 +265,32 @@ export function countyWinners(nytByFips) {
   };
 }
 
+function numVotes(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function voteLedger(plus, minusAbs) {
+  const plusN = numVotes(plus);
+  const minusN = -Math.abs(numVotes(minusAbs));
+  return { plus: plusN, minus: minusN, net: plusN + minusN };
+}
+
 /** Count filtered precincts by the presidential winner of their county. */
 export function tallyByCountyWinner(items, winnersByFips) {
-  const out = { dem: 0, rep: 0, other: 0, unknown: 0, total: 0 };
+  const out = {
+    dem: 0,
+    rep: 0,
+    other: 0,
+    unknown: 0,
+    total: 0,
+    votes: {
+      dem: { plus: 0, minus: 0, net: 0 },
+      rep: { plus: 0, minus: 0, net: 0 },
+    },
+  };
+  let demVotes = 0;
+  let repVotes = 0;
   for (const item of items || []) {
     const n = Number(item.n);
     const add = Number.isFinite(n) && n > 0 ? n : 1;
@@ -279,7 +302,11 @@ export function tallyByCountyWinner(items, winnersByFips) {
     else if (party === "republican") out.rep += add;
     else if (party) out.other += add;
     else out.unknown += add;
+    demVotes += numVotes(item.votes_dem ?? item.votesDem);
+    repVotes += numVotes(item.votes_rep ?? item.votesRep);
   }
+  out.votes.dem = voteLedger(demVotes, repVotes);
+  out.votes.rep = voteLedger(repVotes, demVotes);
   return out;
 }
 

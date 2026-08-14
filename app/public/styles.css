@@ -1219,7 +1219,7 @@ select:focus, input[type="search"]:focus, .page-btn:focus-visible {
   left: 0.65rem;
   bottom: 0.65rem;
   z-index: 500;
-  min-width: 10.5rem;
+  min-width: 12.5rem;
   padding: 0.55rem 0.7rem 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
@@ -1252,6 +1252,13 @@ select:focus, input[type="search"]:focus, .page-btn:focus-visible {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
+}
+.map-legend-votes {
+  display: block;
+  margin: 0 0 0.2rem 1.05rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
 }
 .map-legend i {
   width: 0.7rem;

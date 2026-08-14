@@ -429,7 +429,12 @@ async function handle(req, res) {
             const flags = r.flags || [];
             return !flags.includes("zero_votes") && !flags.includes("zero_cluster");
           })
-          .map((r) => ({ countyFips: r.countyFips, n: 1 }));
+          .map((r) => ({
+            countyFips: r.countyFips,
+            n: 1,
+            votes_dem: r.votes_dem,
+            votes_rep: r.votes_rep,
+          }));
     return json(res, 200, {
       ...tallyByCountyWinner(items, store.countyWinners.counties),
       flaggedOnly: q.flaggedOnly,

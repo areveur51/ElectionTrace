@@ -2055,9 +2055,16 @@ function fillCountyLegend(packet, tally) {
   const rep = packet?.rep?.last || names().repShort || "Rep";
   const year = String(packet?.election_date || "2020").slice(0, 4);
   const kind = tally?.flaggedOnly === false ? "precincts" : "flagged";
+  const voteLine = (side) => {
+    const v = tally?.votes?.[side];
+    if (!v) return "";
+    return `<span class="map-legend-votes">${fmtStat(v.plus)} · ${fmtStat(v.minus)} · net ${fmtStat(v.net)}</span>`;
+  };
   const counts = tally
     ? `<div class="map-legend-row"><i class="dem"></i>${escapeHtml(dem)} <b>${fmt(tally.dem)}</b></div>
+    ${voteLine("dem")}
     <div class="map-legend-row"><i class="rep"></i>${escapeHtml(rep)} <b>${fmt(tally.rep)}</b></div>
+    ${voteLine("rep")}
     ${tally.other ? `<div class="map-legend-row"><i class="oth"></i>Other <b>${fmt(tally.other)}</b></div>` : ""}
     ${tally.unknown ? `<div class="map-legend-row"><i class="unk"></i>No county match <b>${fmt(tally.unknown)}</b></div>` : ""}
     <p>${fmt(tally.total)} ${kind} in the current filters, not counting zero-vote precincts or zero-vote county clusters.</p>`

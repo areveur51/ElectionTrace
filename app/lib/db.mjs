@@ -237,7 +237,10 @@ export async function queryCountyTally(p, { state, type, q, flaggedOnly, exclude
   }
   const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const { rows } = await p.query(
-    `SELECT county_fips AS "countyFips", count(*)::int AS n
+    `SELECT county_fips AS "countyFips",
+            count(*)::int AS n,
+            COALESCE(sum(votes_dem), 0)::float AS "votes_dem",
+            COALESCE(sum(votes_rep), 0)::float AS "votes_rep"
      FROM et_precincts ${clause}
      GROUP BY county_fips`,
     params,

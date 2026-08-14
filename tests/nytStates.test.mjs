@@ -74,6 +74,22 @@ describe("parseStateRace", () => {
         42101: { winnerParty: "democrat" },
       },
     );
-    assert.deepEqual(tally, { dem: 2, rep: 3, other: 0, unknown: 1, total: 6 });
+    assert.equal(tally.dem, 2);
+    assert.equal(tally.rep, 3);
+    assert.equal(tally.other, 0);
+    assert.equal(tally.unknown, 1);
+    assert.equal(tally.total, 6);
+    const voted = tallyByCountyWinner(
+      [
+        { countyFips: "42001", n: 1, votes_dem: 40, votes_rep: 60 },
+        { countyFips: "42101", n: 1, votes_dem: 100, votes_rep: 20 },
+      ],
+      {
+        42001: { winnerParty: "republican" },
+        42101: { winnerParty: "democrat" },
+      },
+    );
+    assert.deepEqual(voted.votes.dem, { plus: 140, minus: -80, net: 60 });
+    assert.deepEqual(voted.votes.rep, { plus: 80, minus: -140, net: -60 });
   });
 });
