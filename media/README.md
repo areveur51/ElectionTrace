@@ -33,7 +33,13 @@ Optional NYT election-night files (candidate names + reporting timeseries):
 
 Put per-state JSON in `nyt-election-data/` (e.g. `pennsylvania.json`). Those load without reindexing.
 
-The national lab extract (`precincts-with-results.geojson.gz`, ~264 MB) is **not** committed. How to publish and fetch it: [`docs/DATA.md`](../docs/DATA.md).
+The national lab extract (`precincts-with-results.geojson.gz`, ~264 MB) is **not** committed. Fetch the [`data-2020`](https://github.com/areveur51/ElectionTrace/releases/tag/data-2020) pack:
+
+```bash
+./scripts/fetch-data.sh
+```
+
+Details: [`docs/DATA.md`](../docs/DATA.md).
 
 ```bash
 npm run index

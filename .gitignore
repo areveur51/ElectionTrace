@@ -23,6 +23,9 @@ media/*
 !media/sample/
 !media/sample/**
 
+# Packaged release tarball
+dist/
+
 # Local TLS material
 tls/*.key
 tls/*.crt

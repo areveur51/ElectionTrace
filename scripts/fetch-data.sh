@@ -5,18 +5,19 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${ROOT}/media"
-URL="${1:-${ELECTIONTRACE_DATA_URL:-}}"
+DEFAULT_URL="https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz"
+URL="${1:-${ELECTIONTRACE_DATA_URL:-$DEFAULT_URL}}"
 
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [archive-url]
 
 Downloads a .tar.gz / .tgz / .zip data pack and unpacks it into media/.
-If no URL is given, uses \$ELECTIONTRACE_DATA_URL.
+With no argument, uses \$ELECTIONTRACE_DATA_URL or the published
+data-2020 GitHub Release.
 
-Example (after you publish a GitHub Release):
-  ELECTIONTRACE_DATA_URL=https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz \\
-    ./scripts/fetch-data.sh
+Example:
+  ./scripts/fetch-data.sh
 
 The pack should contain:
   precincts-with-results.geojson.gz   (or any *.geojson / *.geojson.gz)

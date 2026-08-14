@@ -75,12 +75,14 @@ Same URL. Sample data is used until you add a full extract under `media/`.
 
 ## Full 2020 extract
 
-The lab precinct file is ~264 MB and is **not** in git. After a [Release](https://github.com/areveur51/ElectionTrace/releases) data pack exists (see [`docs/DATA.md`](docs/DATA.md)):
+The lab precinct file is ~264 MB and is **not** in git. Pull the published pack (national precincts + 51 night-of state files) from the [`data-2020`](https://github.com/areveur51/ElectionTrace/releases/tag/data-2020) release:
 
 ```bash
-./scripts/fetch-data.sh https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
+./scripts/fetch-data.sh
 npm start
 ```
+
+That unpacks `electiontrace-data.tar.gz` into `media/`. Details: [`docs/DATA.md`](docs/DATA.md).
 
 Or copy your own `*.geojson.gz` into `media/` and optional night files into `media/nyt-election-data/`.
 

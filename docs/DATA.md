@@ -17,26 +17,25 @@ Field list: [`media/README.md`](../media/README.md).
 
 ## Full lab extract (recommended for a real session)
 
-1. Publish a **GitHub Release** (for example tag `data-2020`) whose asset is a tarball built on a machine that already has the files:
+The pack is on the [`data-2020`](https://github.com/areveur51/ElectionTrace/releases/tag/data-2020) GitHub Release (`electiontrace-data.tar.gz`: national precincts + 51 night-of state files).
 
-   ```bash
-   ./scripts/package-data.sh
-   # → dist/electiontrace-data.tar.gz
-   ```
+```bash
+./scripts/fetch-data.sh
+npm start
+```
 
-   Attach that file to the release. Do **not** put secrets, `.env`, or TLS keys in the tarball. The pack script only copies GeoJSON and night JSON from `media/`.
+To rebuild or re-publish the pack from a machine that already has the files:
 
-2. Anyone else:
+```bash
+./scripts/package-data.sh
+# → dist/electiontrace-data.tar.gz
+```
 
-   ```bash
-   export ELECTIONTRACE_DATA_URL=https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
-   ./scripts/fetch-data.sh
-   npm start
-   ```
+Do **not** put secrets, `.env`, or TLS keys in the tarball. The pack script only copies GeoJSON and night JSON from `media/`.
 
-   Or pass the URL: `./scripts/fetch-data.sh https://…/electiontrace-data.tar.gz`
+Override the URL if needed: `./scripts/fetch-data.sh https://…/electiontrace-data.tar.gz`
 
-3. Restart the app so it reindexes.
+Restart the app so it reindexes.
 
 ## Docker
 
