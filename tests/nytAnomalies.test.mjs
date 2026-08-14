@@ -144,6 +144,7 @@ describe("NYT feed findings", () => {
     assert.equal(isFeedVoteSwitch(29146, -30086, 0), true);
     assert.equal(isFeedVoteSwitch(17929, -17877, 54), true);
     assert.equal(isFeedVoteSwitch(3096, -5420, 560), false);
+    assert.equal(isFeedVoteSwitch(8679, -14157, -5561), true);
     const ts = [
       { votes: 1_000_000, eevp: 57, timestamp: "t1", vote_shares: { bidenj: 0.4, trumpd: 0.58 } },
       { votes: 1_000_000, eevp: 57, timestamp: "t2", vote_shares: { bidenj: 0.479568, trumpd: 0.500432 } },
@@ -156,6 +157,27 @@ describe("NYT feed findings", () => {
     assert.equal(sw[0].who, "Trump");
     assert.ok(sw[0].repGain <= -5000);
     assert.ok(sw[0].demGain >= 5000);
+  });
+
+  it("adds a retraction-step swap to feed_vote_switch when leftover is within 1K", () => {
+    const from = 2_000_000;
+    const to = 1_994_439;
+    const ts = [
+      { votes: from, eevp: 80, timestamp: "t1", vote_shares: { bidenj: 900_000 / from, trumpd: 1_080_000 / from } },
+      {
+        votes: to,
+        eevp: 80,
+        timestamp: "t2",
+        vote_shares: { bidenj: 908_679 / to, trumpd: 1_065_843 / to },
+      },
+    ];
+    const out = analyzeTimeseries(ts, { name: "Texas" });
+    assert.ok(out.retractions.length >= 1);
+    const sw = out.errors.filter((e) => e.kind === "feed_vote_switch");
+    assert.equal(sw.length, 1);
+    assert.ok(sw[0].demGain >= 5000);
+    assert.ok(sw[0].repGain <= -5000);
+    assert.ok(sw[0].delta < 0);
   });
 
   it("labels county-sum vs state-total disagreement as an error", () => {

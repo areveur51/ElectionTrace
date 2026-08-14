@@ -40,7 +40,7 @@ export const ERROR_TYPES = [
   {
     id: "feed_vote_switch",
     name: "Implied votes moved between candidates",
-    about: "Share × total fell for one candidate and rose for the other by about the same amount, while the headline total barely moved.",
+    about: "Share × total fell for one candidate and rose for the other by about the same amount. The headline total is flat, or the leftover is within 1,000 of that 5,000-vote band.",
     whyAnomaly:
       "Counting that only adds ballots does not move thousands of implied votes from one candidate to the other with a flat total.",
     note: "Same comparison as the precinct vote-transfer rule, at state scale.",
@@ -135,6 +135,7 @@ export const FEED_RULES = {
   phantomMinLoss: 5000,
   switchSumSlack: 0.15,
   switchTotalSlack: 0.2,
+  switchAbsSlack: 1000,
   eevpDrop: 5,
   countyColTol: 2,
   countyVsStateAbs: 50,
@@ -149,15 +150,25 @@ function check(expr, left, right, ok) {
   return { expr, left, right, ok: Boolean(ok) };
 }
 
-/** Opposite implied-count move, nearly flat total — precinct vote_transfer at state scale. */
+export function switchSumLimit(moved, R = FEED_RULES) {
+  const slack = R.switchAbsSlack ?? 1000;
+  return Math.max(R.phantomMinLoss, (R.switchSumSlack ?? 0.15) * Math.abs(moved)) + slack;
+}
+
+export function switchTotalLimit(moved, R = FEED_RULES) {
+  const slack = R.switchAbsSlack ?? 1000;
+  return Math.max(R.phantomMinLoss, (R.switchTotalSlack ?? 0.2) * Math.abs(moved)) + slack;
+}
+
+/** Opposite implied-count move, leftover and total Δ within 1K of the 5,000 band. */
 export function isFeedVoteSwitch(demGain, repGain, totDelta, R = FEED_RULES) {
   const minLoss = R.phantomMinLoss;
   const opposite =
     (demGain <= -minLoss && repGain >= minLoss) || (repGain <= -minLoss && demGain >= minLoss);
   if (!opposite) return false;
   const moved = Math.min(Math.abs(demGain), Math.abs(repGain));
-  if (Math.abs(demGain + repGain) > Math.max(minLoss, (R.switchSumSlack ?? 0.15) * moved)) return false;
-  if (Math.abs(totDelta) > Math.max(minLoss, (R.switchTotalSlack ?? 0.2) * moved)) return false;
+  if (Math.abs(demGain + repGain) > switchSumLimit(moved, R)) return false;
+  if (Math.abs(totDelta) > switchTotalLimit(moved, R)) return false;
   return true;
 }
 
@@ -319,6 +330,7 @@ export function analyzeTimeseries(ts, { demKey = "bidenj", repKey = "trumpd", na
   let unsorted = 0;
   let firstUnsorted = null;
   const phantom = [];
+  const switchHits = [];
   for (let i = 1; i < ts.length; i++) {
     const a = ts[i - 1];
     const b = ts[i];
@@ -479,7 +491,24 @@ export function analyzeTimeseries(ts, { demKey = "bidenj", repKey = "trumpd", na
         });
       }
     }
-    if (
+    const dRound = Math.round(demGain);
+    const rRound = Math.round(repGain);
+    if (av >= R.phantomMinVotes && bv >= R.phantomMinVotes && isFeedVoteSwitch(dRound, rRound, dv, R)) {
+      const who = dRound < rRound ? "Biden" : "Trump";
+      switchHits.push({
+        who,
+        lost: Math.round(Math.min(dRound, rRound)),
+        from: av,
+        to: bv,
+        timestamp: b.timestamp,
+        eevp: b.eevp ?? null,
+        index: i,
+        prev,
+        next,
+        demGain: dRound,
+        repGain: rRound,
+      });
+    } else if (
       av >= R.phantomMinVotes &&
       bv >= R.phantomMinVotes &&
       dv >= 0 &&
@@ -497,8 +526,8 @@ export function analyzeTimeseries(ts, { demKey = "bidenj", repKey = "trumpd", na
         index: i,
         prev,
         next,
-        demGain: Math.round(demGain),
-        repGain: Math.round(repGain),
+        demGain: dRound,
+        repGain: rRound,
       });
     }
   }
@@ -526,63 +555,60 @@ export function analyzeTimeseries(ts, { demKey = "bidenj", repKey = "trumpd", na
       }),
     });
   }
-  if (phantom.length) {
-    const switches = [];
-    const losses = [];
-    for (const p of phantom) {
-      if (isFeedVoteSwitch(p.demGain, p.repGain, p.to - p.from, R)) switches.push(p);
-      else losses.push(p);
-    }
-    if (switches.length) {
-      switches.sort((a, b) => Math.min(Math.abs(a.demGain), Math.abs(a.repGain)) < Math.min(Math.abs(b.demGain), Math.abs(b.repGain)) ? 1 : -1);
-      const w = switches[0];
-      const tot = w.to - w.from;
-      const moved = Math.min(Math.abs(w.demGain), Math.abs(w.repGain));
-      errors.push({
-        kind: "feed_vote_switch",
+  if (switchHits.length) {
+    switchHits.sort((a, b) => Math.min(Math.abs(a.demGain), Math.abs(a.repGain)) < Math.min(Math.abs(b.demGain), Math.abs(b.repGain)) ? 1 : -1);
+    const w = switchHits[0];
+    const tot = w.to - w.from;
+    const moved = Math.min(Math.abs(w.demGain), Math.abs(w.repGain));
+    const sumLim = switchSumLimit(moved, R);
+    const totLim = switchTotalLimit(moved, R);
+    errors.push({
+      kind: "feed_vote_switch",
+      state: name,
+      detail: `${switchHits.length} update${switchHits.length === 1 ? "" : "s"} where implied counts swapped (~${moved.toLocaleString()} votes)`,
+      n: switchHits.length,
+      who: w.who,
+      worst: w.lost,
+      demGain: w.demGain,
+      repGain: w.repGain,
+      delta: tot,
+      timestamp: w.timestamp,
+      eevp: w.eevp,
+      series: seriesWindow(ts, w.index, demKey, repKey),
+      workup: feedWorkup({
+        label: "anomaly",
+        type: "feed_vote_switch",
         state: name,
-        detail: `${switches.length} update${switches.length === 1 ? "" : "s"} where implied counts swapped (~${moved.toLocaleString()} votes)`,
-        n: switches.length,
-        who: w.who,
-        worst: w.lost,
-        demGain: w.demGain,
-        repGain: w.repGain,
-        delta: tot,
-        timestamp: w.timestamp,
-        eevp: w.eevp,
-        series: seriesWindow(ts, w.index, demKey, repKey),
-        workup: feedWorkup({
-          label: "anomaly",
-          type: "feed_vote_switch",
-          state: name,
-          rule: `opposite implied move of ${R.phantomMinLoss}+ and abs(Δtotal) small`,
-          inputs: {
-            n: switches.length,
-            worst: {
-              who: w.who,
-              lost: w.lost,
-              prev: w.prev,
-              next: w.next,
-              demGain: w.demGain,
-              repGain: w.repGain,
-              delta: tot,
-            },
-            events: switches.map((p) => ({
-              who: p.who,
-              lost: p.lost,
-              demGain: p.demGain,
-              repGain: p.repGain,
-              timestamp: p.timestamp,
-            })),
+        rule: `opposite implied move of ${R.phantomMinLoss}+ and leftover / Δtotal within 1,000 of that band`,
+        inputs: {
+          n: switchHits.length,
+          worst: {
+            who: w.who,
+            lost: w.lost,
+            prev: w.prev,
+            next: w.next,
+            demGain: w.demGain,
+            repGain: w.repGain,
+            delta: tot,
           },
-          checks: [
-            check("one implied count fell and the other rose by >= 5,000", { dem: w.demGain, rep: w.repGain }, R.phantomMinLoss, isFeedVoteSwitch(w.demGain, w.repGain, tot, R)),
-            check("abs(Δimplied_dem + Δimplied_rep) is small", w.demGain + w.repGain, Math.max(R.phantomMinLoss, 0.15 * moved), Math.abs(w.demGain + w.repGain) <= Math.max(R.phantomMinLoss, 0.15 * moved)),
-            check("abs(Δvotes) is small", tot, Math.max(R.phantomMinLoss, 0.2 * moved), Math.abs(tot) <= Math.max(R.phantomMinLoss, 0.2 * moved)),
-          ],
-        }),
-      });
-    }
+          events: switchHits.map((p) => ({
+            who: p.who,
+            lost: p.lost,
+            demGain: p.demGain,
+            repGain: p.repGain,
+            timestamp: p.timestamp,
+          })),
+        },
+        checks: [
+          check("one implied count fell and the other rose by >= 5,000", { dem: w.demGain, rep: w.repGain }, R.phantomMinLoss, isFeedVoteSwitch(w.demGain, w.repGain, tot, R)),
+          check("abs(Δimplied_dem + Δimplied_rep) within 1,000 of the 5,000 band", w.demGain + w.repGain, sumLim, Math.abs(w.demGain + w.repGain) <= sumLim),
+          check("abs(Δvotes) within 1,000 of the 5,000 band", tot, totLim, Math.abs(tot) <= totLim),
+        ],
+      }),
+    });
+  }
+  if (phantom.length) {
+    const losses = phantom;
     if (losses.length) {
       losses.sort((a, b) => a.lost - b.lost);
       const w = losses[0];
