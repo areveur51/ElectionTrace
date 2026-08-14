@@ -2067,7 +2067,8 @@ function fillCountyLegend(packet, tally) {
     ${voteLine("rep")}
     ${tally.other ? `<div class="map-legend-row"><i class="oth"></i>Other <b>${fmt(tally.other)}</b></div>` : ""}
     ${tally.unknown ? `<div class="map-legend-row"><i class="unk"></i>No county match <b>${fmt(tally.unknown)}</b></div>` : ""}
-    <p>${fmt(tally.total)} ${kind} in the current filters, not counting zero-vote precincts or zero-vote county clusters.</p>`
+    <p>${fmt(tally.total)} ${kind} in the current filters, not counting zero-vote precincts or zero-vote county clusters.</p>
+    <p>Plus, minus, and net votes change as more anomalies are detected in the current filters.</p>`
     : `<div class="map-legend-row"><i class="dem"></i>${escapeHtml(dem)}</div>
     <div class="map-legend-row"><i class="rep"></i>${escapeHtml(rep)}</div>
     <p>Counting ${kind} by county winner…</p>`;
