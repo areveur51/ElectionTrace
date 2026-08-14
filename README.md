@@ -84,6 +84,10 @@ npm start
 
 Or copy your own `*.geojson.gz` into `media/` and optional night files into `media/nyt-election-data/`.
 
+**Direct download (GeoJSON, gzipped):** [https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz](https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz)
+
+Save that file under `media/` (about 264 MB), then `npm start` to index it. The extract is third-party — see [`docs/DATA.md`](docs/DATA.md).
+
 ## What it flags
 
 Every rule is listed in the app under **Methods** and in `app/lib/methods.mjs`. Density and size tails are computed **inside each state**, then the same cutoffs apply everywhere.
