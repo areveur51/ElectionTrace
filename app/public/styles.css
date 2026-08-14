@@ -1666,6 +1666,12 @@ th {
 .time-chart-hit.preview { padding: 0.15rem; border-radius: 8px; }
 .time-chart.preview .line { stroke-width: 1.05; }
 .time-chart-hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.time-chart-frame {
+  padding: 0.55rem 0.4rem 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: #090c12;
+}
 
 .chart-readout {
   display: grid;

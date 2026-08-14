@@ -1630,7 +1630,9 @@ function openTimePopup() {
   const pts = chartPoints(series);
   body.innerHTML = `
     <div data-time-chart-full>
+      <div class="time-chart-frame">
       ${renderTimeChart(series, { mode: "full", markT: state.timeChartMark, hideOther: Boolean(state.timeChartMark), thin: Boolean(state.timeChartMark) })}
+      </div>
       <p class="chart-readout" data-readout></p>
       <ul class="share-legend">
         <li><i class="dem"></i>${escapeHtml(n.dem || n.demShort || "Dem")}</li>
