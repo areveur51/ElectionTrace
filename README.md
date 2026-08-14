@@ -19,6 +19,32 @@ media/*.geojson.gz  →  index  →  map + table + night-of charts
 - In the files: sort order and county-vs-state totals
 - Copy or download a JSON proof packet for any item
 
+## Screenshots
+
+Precinct lab — national map with county presidential winner overlay (on by default). Flagged counts follow the state, method, and search filters. Overlay totals skip precincts with zero reported votes.
+
+![Precinct lab — United States](docs/screenshots/precinct-lab-united-states.png)
+
+Same lab, one state at a time. The right pane is precinct first, then county night totals, then the state series. Map hover shows flag pills.
+
+| New York | Minnesota |
+|:--:|:--:|
+| ![Precinct lab — New York](docs/screenshots/precinct-lab-new-york.png) | ![Precinct lab — Minnesota](docs/screenshots/precinct-lab-minnesota.png) |
+
+| California | Texas |
+|:--:|:--:|
+| ![Precinct lab — California](docs/screenshots/precinct-lab-california.png) | ![Precinct lab — Texas](docs/screenshots/precinct-lab-texas.png) |
+
+![Precinct lab — Pennsylvania](docs/screenshots/precinct-lab-pennsylvania.png)
+
+Night-of — county first-report charts and a proof-of-work fold under each preview.
+
+![Night-of — Pennsylvania](docs/screenshots/night-of-pennsylvania.png)
+
+Coverage — which night files are present for the selected state (precincts, counties, states, timeseries).
+
+![Coverage — Pennsylvania](docs/screenshots/coverage-pennsylvania.png)
+
 ## Quick start
 
 Needs [Node.js 20+](https://nodejs.org/).
@@ -106,6 +132,7 @@ media/sample/         tiny demo (committed)
 media/                your extract (not committed)
 data/                 generated index (not committed)
 docs/DATA.md          how to publish / fetch a data pack
+docs/screenshots/     README captures
 ```
 
 ## License
