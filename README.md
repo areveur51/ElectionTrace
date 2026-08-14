@@ -1,23 +1,38 @@
 # ElectionTrace
 
-National precinct-anomaly explorer. The same detectors run in every state. Open a map, a table, and a proof-of-work packet for each flag.
+[![test](https://github.com/areveur51/ElectionTrace/actions/workflows/test.yml/badge.svg)](https://github.com/areveur51/ElectionTrace/actions/workflows/test.yml)
+
+National precinct-anomaly explorer for the 2020 presidential count. The same detectors run in every state. You get a map, a table, night-of charts, and a proof-of-work packet for each flag.
+
+**Repo:** [https://github.com/areveur51/ElectionTrace](https://github.com/areveur51/ElectionTrace)
 
 ```
 media/*.geojson.gz  →  index  →  map + table + night-of charts
 ```
+
+## What you can do
+
+- Browse flagged precincts on a map (county presidential winner overlay on by default)
+- Filter by state, method, and search
+- Open a precinct: votes first, then county night totals, then the state series
+- Night-of count: retractions, lead changes, one-sided dumps
+- In the files: sort order and county-vs-state totals
+- Copy or download a JSON proof packet for any item
 
 ## Quick start
 
 Needs [Node.js 20+](https://nodejs.org/).
 
 ```bash
-git clone https://github.com/YOU/ElectionTrace.git
+git clone https://github.com/areveur51/ElectionTrace.git
 cd ElectionTrace
 npm install
 npm start
 ```
 
-Open [http://127.0.0.1:5200](http://127.0.0.1:5200). With no extra files, the committed **sample** (a few precincts in Pennsylvania) is enough to click through the UI.
+Open [http://127.0.0.1:5200](http://127.0.0.1:5200).
+
+With no extra files, the committed **sample** (a few precincts in Pennsylvania) is enough to click through the UI.
 
 ```bash
 npm test          # detectors + UI contracts
@@ -34,10 +49,10 @@ Same URL. Sample data is used until you add a full extract under `media/`.
 
 ## Full 2020 extract
 
-The lab file is ~264 MB and is **not** in git. After you publish a GitHub Release (see [`docs/DATA.md`](docs/DATA.md)):
+The lab precinct file is ~264 MB and is **not** in git. After a [Release](https://github.com/areveur51/ElectionTrace/releases) data pack exists (see [`docs/DATA.md`](docs/DATA.md)):
 
 ```bash
-./scripts/fetch-data.sh https://github.com/YOU/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
+./scripts/fetch-data.sh https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
 npm start
 ```
 

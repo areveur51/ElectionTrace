@@ -15,7 +15,7 @@ Downloads a .tar.gz / .tgz / .zip data pack and unpacks it into media/.
 If no URL is given, uses \$ELECTIONTRACE_DATA_URL.
 
 Example (after you publish a GitHub Release):
-  ELECTIONTRACE_DATA_URL=https://github.com/YOU/ElectionTrace/releases/download/data-2020/electiontrace-data-2020.tar.gz \\
+  ELECTIONTRACE_DATA_URL=https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz \\
     ./scripts/fetch-data.sh
 
 The pack should contain:

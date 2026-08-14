@@ -29,7 +29,7 @@ Field list: [`media/README.md`](../media/README.md).
 2. Anyone else:
 
    ```bash
-   export ELECTIONTRACE_DATA_URL=https://github.com/YOU/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
+   export ELECTIONTRACE_DATA_URL=https://github.com/areveur51/ElectionTrace/releases/download/data-2020/electiontrace-data.tar.gz
    ./scripts/fetch-data.sh
    npm start
    ```
