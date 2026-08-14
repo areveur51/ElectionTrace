@@ -38,6 +38,16 @@ export const ERROR_TYPES = [
     tab: "patterns",
   },
   {
+    id: "feed_vote_switch",
+    name: "Implied votes moved between candidates",
+    about: "Share × total fell for one candidate and rose for the other by about the same amount, while the headline total barely moved.",
+    whyAnomaly:
+      "Counting that only adds ballots does not move thousands of implied votes from one candidate to the other with a flat total.",
+    note: "Same comparison as the precinct vote-transfer rule, at state scale.",
+    sameMethod: "vote_transfer",
+    tab: "patterns",
+  },
+  {
     id: "eevp_backwards",
     name: "Expected vote percent went down",
     about: "The feed's 'expected votes in' figure dropped by more than 5 points.",
@@ -123,6 +133,8 @@ export const FEED_RULES = {
   dumpMinShare: 0.75,
   phantomMinVotes: 5000,
   phantomMinLoss: 5000,
+  switchSumSlack: 0.15,
+  switchTotalSlack: 0.2,
   eevpDrop: 5,
   countyColTol: 2,
   countyVsStateAbs: 50,
@@ -135,6 +147,18 @@ function share(obj, key) {
 
 function check(expr, left, right, ok) {
   return { expr, left, right, ok: Boolean(ok) };
+}
+
+/** Opposite implied-count move, nearly flat total — precinct vote_transfer at state scale. */
+export function isFeedVoteSwitch(demGain, repGain, totDelta, R = FEED_RULES) {
+  const minLoss = R.phantomMinLoss;
+  const opposite =
+    (demGain <= -minLoss && repGain >= minLoss) || (repGain <= -minLoss && demGain >= minLoss);
+  if (!opposite) return false;
+  const moved = Math.min(Math.abs(demGain), Math.abs(repGain));
+  if (Math.abs(demGain + repGain) > Math.max(minLoss, (R.switchSumSlack ?? 0.15) * moved)) return false;
+  if (Math.abs(totDelta) > Math.max(minLoss, (R.switchTotalSlack ?? 0.2) * moved)) return false;
+  return true;
 }
 
 function stable(value) {
@@ -503,44 +527,102 @@ export function analyzeTimeseries(ts, { demKey = "bidenj", repKey = "trumpd", na
     });
   }
   if (phantom.length) {
-    phantom.sort((a, b) => a.lost - b.lost);
-    const w = phantom[0];
-    errors.push({
-      kind: "implied_negative_candidate",
-      state: name,
-      detail: `${phantom.length} update${phantom.length === 1 ? "" : "s"} where share×total implies ${w.who} lost ${Math.abs(w.lost).toLocaleString()}+ votes`,
-      n: phantom.length,
-      who: w.who,
-      worst: w.lost,
-      demGain: w.demGain,
-      repGain: w.repGain,
-      delta: w.to - w.from,
-      timestamp: w.timestamp,
-      eevp: w.eevp,
-      series: seriesWindow(ts, w.index, demKey, repKey),
-      workup: feedWorkup({
-        label: "anomaly",
-        type: "implied_negative_candidate",
+    const switches = [];
+    const losses = [];
+    for (const p of phantom) {
+      if (isFeedVoteSwitch(p.demGain, p.repGain, p.to - p.from, R)) switches.push(p);
+      else losses.push(p);
+    }
+    if (switches.length) {
+      switches.sort((a, b) => Math.min(Math.abs(a.demGain), Math.abs(a.repGain)) < Math.min(Math.abs(b.demGain), Math.abs(b.repGain)) ? 1 : -1);
+      const w = switches[0];
+      const tot = w.to - w.from;
+      const moved = Math.min(Math.abs(w.demGain), Math.abs(w.repGain));
+      errors.push({
+        kind: "feed_vote_switch",
         state: name,
-        rule: `votes did not fall and min(Δ(share×total)) <= -${R.phantomMinLoss}`,
-        inputs: {
-          n: phantom.length,
-          worst: {
-            who: w.who,
-            lost: w.lost,
-            prev: w.prev,
-            next: w.next,
-            demGain: w.demGain,
-            repGain: w.repGain,
+        detail: `${switches.length} update${switches.length === 1 ? "" : "s"} where implied counts swapped (~${moved.toLocaleString()} votes)`,
+        n: switches.length,
+        who: w.who,
+        worst: w.lost,
+        demGain: w.demGain,
+        repGain: w.repGain,
+        delta: tot,
+        timestamp: w.timestamp,
+        eevp: w.eevp,
+        series: seriesWindow(ts, w.index, demKey, repKey),
+        workup: feedWorkup({
+          label: "anomaly",
+          type: "feed_vote_switch",
+          state: name,
+          rule: `opposite implied move of ${R.phantomMinLoss}+ and abs(Δtotal) small`,
+          inputs: {
+            n: switches.length,
+            worst: {
+              who: w.who,
+              lost: w.lost,
+              prev: w.prev,
+              next: w.next,
+              demGain: w.demGain,
+              repGain: w.repGain,
+              delta: tot,
+            },
+            events: switches.map((p) => ({
+              who: p.who,
+              lost: p.lost,
+              demGain: p.demGain,
+              repGain: p.repGain,
+              timestamp: p.timestamp,
+            })),
           },
-          events: phantom.map((p) => ({ who: p.who, lost: p.lost, timestamp: p.timestamp })),
-        },
-        checks: [
-          check("votes_next >= votes_prev", { from: w.from, to: w.to }, 0, w.to - w.from >= 0),
-          check(`min(Δimplied_dem, Δimplied_rep) <= -${R.phantomMinLoss}`, w.lost, -R.phantomMinLoss, w.lost <= -R.phantomMinLoss),
-        ],
-      }),
-    });
+          checks: [
+            check("one implied count fell and the other rose by >= 5,000", { dem: w.demGain, rep: w.repGain }, R.phantomMinLoss, isFeedVoteSwitch(w.demGain, w.repGain, tot, R)),
+            check("abs(Δimplied_dem + Δimplied_rep) is small", w.demGain + w.repGain, Math.max(R.phantomMinLoss, 0.15 * moved), Math.abs(w.demGain + w.repGain) <= Math.max(R.phantomMinLoss, 0.15 * moved)),
+            check("abs(Δvotes) is small", tot, Math.max(R.phantomMinLoss, 0.2 * moved), Math.abs(tot) <= Math.max(R.phantomMinLoss, 0.2 * moved)),
+          ],
+        }),
+      });
+    }
+    if (losses.length) {
+      losses.sort((a, b) => a.lost - b.lost);
+      const w = losses[0];
+      errors.push({
+        kind: "implied_negative_candidate",
+        state: name,
+        detail: `${losses.length} update${losses.length === 1 ? "" : "s"} where share×total implies ${w.who} lost ${Math.abs(w.lost).toLocaleString()}+ votes`,
+        n: losses.length,
+        who: w.who,
+        worst: w.lost,
+        demGain: w.demGain,
+        repGain: w.repGain,
+        delta: w.to - w.from,
+        timestamp: w.timestamp,
+        eevp: w.eevp,
+        series: seriesWindow(ts, w.index, demKey, repKey),
+        workup: feedWorkup({
+          label: "anomaly",
+          type: "implied_negative_candidate",
+          state: name,
+          rule: `votes did not fall and min(Δ(share×total)) <= -${R.phantomMinLoss}`,
+          inputs: {
+            n: losses.length,
+            worst: {
+              who: w.who,
+              lost: w.lost,
+              prev: w.prev,
+              next: w.next,
+              demGain: w.demGain,
+              repGain: w.repGain,
+            },
+            events: losses.map((p) => ({ who: p.who, lost: p.lost, timestamp: p.timestamp })),
+          },
+          checks: [
+            check("votes_next >= votes_prev", { from: w.from, to: w.to }, 0, w.to - w.from >= 0),
+            check(`min(Δimplied_dem, Δimplied_rep) <= -${R.phantomMinLoss}`, w.lost, -R.phantomMinLoss, w.lost <= -R.phantomMinLoss),
+          ],
+        }),
+      });
+    }
   }
   return { retractions, flips, dumps, errors };
 }
@@ -666,6 +748,11 @@ export function summarizeFindings(byFips) {
       "implied_negative_candidate",
       "anomaly",
       otherErrors.filter((e) => e.kind === "implied_negative_candidate").map((e) => e.workup).filter(Boolean),
+    ),
+    feed_vote_switch: tableWorkup(
+      "feed_vote_switch",
+      "anomaly",
+      otherErrors.filter((e) => e.kind === "feed_vote_switch").map((e) => e.workup).filter(Boolean),
     ),
     eevp_backwards: tableWorkup(
       "eevp_backwards",

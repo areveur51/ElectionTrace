@@ -6,6 +6,7 @@ import {
   summarizeFindings,
   sealWorkup,
   buildCoverage,
+  isFeedVoteSwitch,
   FINDING_TYPES,
   ERROR_TYPES,
 } from "../app/lib/nytAnomalies.mjs";
@@ -27,6 +28,7 @@ describe("NYT feed findings", () => {
     assert.ok(mapped.some((t) => t.id === "feed_retraction" && t.sameMethod === "count_retraction"));
     assert.ok(mapped.some((t) => t.id === "onesided_dump" && t.sameMethod === "one_sided_increment"));
     assert.ok(mapped.some((t) => t.id === "implied_negative_candidate" && t.sameMethod === "vote_transfer"));
+    assert.ok(mapped.some((t) => t.id === "feed_vote_switch" && t.sameMethod === "vote_transfer"));
     assert.ok(mapped.some((t) => t.id === "county_vs_state" && t.sameMethod === "lead_mismatch"));
     for (const t of mapped) {
       assert.ok(METHOD_BY_ID[t.sameMethod], t.id);
@@ -35,6 +37,7 @@ describe("NYT feed findings", () => {
     assert.equal(FINDING_TYPES.find((t) => t.id === "lead_flip").sameMethod, null);
     assert.equal(ERROR_TYPES.find((t) => t.id === "feed_retraction").tab, "patterns");
     assert.equal(ERROR_TYPES.find((t) => t.id === "implied_negative_candidate").tab, "patterns");
+    assert.equal(ERROR_TYPES.find((t) => t.id === "feed_vote_switch").tab, "patterns");
     assert.equal(ERROR_TYPES.find((t) => t.id === "eevp_backwards").tab, "patterns");
     assert.equal(FINDING_TYPES.find((t) => t.id === "onesided_dump").tab, "patterns");
     assert.equal(FINDING_TYPES.find((t) => t.id === "county_clean_math").tab, "files");
@@ -49,6 +52,7 @@ describe("NYT feed findings", () => {
     assert.ok(ids.includes("unsorted_series"));
     assert.ok(ids.includes("county_vs_state"));
     assert.ok(ids.includes("implied_negative_candidate"));
+    assert.ok(ids.includes("feed_vote_switch"));
     assert.ok(ids.includes("eevp_backwards"));
     assert.ok(ids.includes("feed_retraction"));
     assert.ok(!ids.includes("onesided_dump"));
@@ -133,6 +137,25 @@ describe("NYT feed findings", () => {
     assert.equal(ph.length, 1);
     assert.equal(ph[0].who, "Biden");
     assert.ok(ph[0].worst <= -5000);
+  });
+
+  it("splits a flat implied swap onto feed_vote_switch", () => {
+    assert.equal(isFeedVoteSwitch(79568, -79568, 0), true);
+    assert.equal(isFeedVoteSwitch(29146, -30086, 0), true);
+    assert.equal(isFeedVoteSwitch(17929, -17877, 54), true);
+    assert.equal(isFeedVoteSwitch(3096, -5420, 560), false);
+    const ts = [
+      { votes: 1_000_000, eevp: 57, timestamp: "t1", vote_shares: { bidenj: 0.4, trumpd: 0.58 } },
+      { votes: 1_000_000, eevp: 57, timestamp: "t2", vote_shares: { bidenj: 0.479568, trumpd: 0.500432 } },
+    ];
+    const out = analyzeTimeseries(ts, { name: "New Jersey" });
+    const sw = out.errors.filter((e) => e.kind === "feed_vote_switch");
+    const ph = out.errors.filter((e) => e.kind === "implied_negative_candidate");
+    assert.equal(sw.length, 1);
+    assert.equal(ph.length, 0);
+    assert.equal(sw[0].who, "Trump");
+    assert.ok(sw[0].repGain <= -5000);
+    assert.ok(sw[0].demGain >= 5000);
   });
 
   it("labels county-sum vs state-total disagreement as an error", () => {

@@ -261,7 +261,10 @@ export const METHODS = [
         "As more ballots are counted, totals usually go up, not sideways. A swap with a flat total is a change to inspect. The night files show the same shape at state scale: share × total implies a candidate lost 5,000 or more votes while the headline total did not fall.",
     },
     params: { minMoved: 10 },
-    sameAs: [{ id: "implied_negative_candidate", tab: "patterns" }],
+    sameAs: [
+      { id: "feed_vote_switch", tab: "patterns" },
+      { id: "implied_negative_candidate", tab: "patterns" },
+    ],
   },
   {
     id: "count_retraction",

@@ -342,6 +342,7 @@ function typeCount(f, id) {
   if (id === "unsorted_series") return f.counts?.errorByKind?.unsorted_series ?? 0;
   if (id === "county_vs_state") return f.counts?.errorByKind?.county_vs_state ?? 0;
   if (id === "implied_negative_candidate") return f.counts?.errorByKind?.implied_negative_candidate ?? 0;
+  if (id === "feed_vote_switch") return f.counts?.errorByKind?.feed_vote_switch ?? 0;
   if (id === "eevp_backwards") return f.counts?.errorByKind?.eevp_backwards ?? 0;
   if (id === "feed_retraction") return f.counts?.retractions ?? 0;
   if (id === "lead_flip") return f.counts?.flips ?? 0;
@@ -683,6 +684,13 @@ function nightView(f, t) {
       meta: (r) => `${r.n} update${r.n === 1 ? "" : "s"}`,
     };
   }
+  if (id === "feed_vote_switch") {
+    return {
+      items: (f.errors || []).filter((e) => e.kind === "feed_vote_switch"),
+      sub: (r) => `${r.who} ${fmt(r.worst)}`,
+      meta: (r) => (r.eevp != null ? `${r.eevp}% in` : ""),
+    };
+  }
   if (id === "eevp_backwards") {
     return {
       items: (f.errors || []).filter((e) => e.kind === "eevp_backwards"),
@@ -717,7 +725,7 @@ function nightItems(f, id) {
   if (id === "lead_flip") return f.flips || [];
   if (id === "feed_retraction") return f.retractions || [];
   if (id === "onesided_dump") return f.dumps || [];
-  if (id === "implied_negative_candidate" || id === "eevp_backwards") {
+  if (id === "implied_negative_candidate" || id === "eevp_backwards" || id === "feed_vote_switch") {
     return (f.errors || []).filter((e) => e.kind === id);
   }
   return [];
@@ -806,6 +814,16 @@ function fileTable(f, id) {
         blurb: "Each card is a state where share × total implies a candidate lost 5,000+ while the total did not fall. Click the preview to enlarge.",
         title: (r) => `${r.state} · implied ${r.who} loss`,
         sub: (r) => `${r.who} ${fmt(r.worst)} · ${r.n} update${r.n === 1 ? "" : "s"} · ${r.eevp ?? "—"}% expected`,
+      },
+    );
+  }
+  if (id === "feed_vote_switch") {
+    return nightPreviewCards(
+      (f.errors || []).filter((e) => e.kind === "feed_vote_switch"),
+      {
+        blurb: "Implied counts swapped with a flat total.",
+        title: (r) => `${r.state} · implied swap`,
+        sub: (r) => `${r.who} ${fmt(r.worst)}`,
       },
     );
   }
