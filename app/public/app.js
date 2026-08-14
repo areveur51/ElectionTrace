@@ -38,6 +38,7 @@ const state = {
   timeSeries: null,
   timeChartTitle: "",
   timeChartMark: null,
+  timeChartHead: null,
   mapRenderer: null,
   coverageSort: "name",
   labSort: "votes",
@@ -593,18 +594,45 @@ function nightHead(t, n) {
   </header>`;
 }
 
+function nightCardHead(row, opts = {}) {
+  const facts = opts.facts
+    ? opts.facts(row)
+    : [
+        { label: "Biden", value: row.demGain, accent: true },
+        { label: "Trump", value: row.repGain },
+      ];
+  return {
+    state: row.state || "—",
+    sub: opts.sub ? opts.sub(row) : "",
+    meta: opts.meta ? opts.meta(row) : "",
+    facts: facts.slice(0, 2),
+  };
+}
+
+function nightFactsHtml(head) {
+  if (!head) return "";
+  const metrics = (head.facts || [])
+    .map(
+      (fact, fi) => `<div>
+        <b class="${fact.accent || fi === 0 ? "accent" : ""}">${escapeHtml(fmtStat(fact.value))}</b>
+        <span>${escapeHtml(fact.label)}</span>
+      </div>`,
+    )
+    .join("");
+  return `${head.sub || head.meta
+    ? `<p class="night-popup-line">
+        ${head.sub ? `<span>${escapeHtml(head.sub)}</span>` : ""}
+        ${head.meta ? `<span class="night-card-meta">${escapeHtml(head.meta)}</span>` : ""}
+      </p>`
+    : ""}
+    ${metrics ? `<div class="night-card-metrics">${metrics}</div>` : ""}`;
+}
+
 function nightPreviewCards(items, opts) {
   if (!items.length) return `<p class="night-empty">None on this extract.</p>`;
   return `<div class="night-grid">${items
     .map((r, i) => {
-      const facts = opts.facts
-        ? opts.facts(r)
-        : [
-            { label: "Biden", value: r.demGain, accent: true },
-            { label: "Trump", value: r.repGain },
-          ];
-      const pair = facts.slice(0, 2);
-      const meta = opts.meta ? opts.meta(r) : "";
+      const head = nightCardHead(r, opts);
       const chart =
         r.series && r.series.length >= 2
           ? renderTimeChart(r.series, { bare: true, preview: true, hideOther: true, thin: true, markT: r.timestamp })
@@ -612,19 +640,21 @@ function nightPreviewCards(items, opts) {
       return `<article class="night-card">
         <header class="night-card-head">
           <div>
-            <h4>${escapeHtml(r.state || "—")}</h4>
-            <p>${escapeHtml(opts.sub(r))}</p>
+            <h4>${escapeHtml(head.state)}</h4>
+            ${head.sub ? `<p>${escapeHtml(head.sub)}</p>` : ""}
           </div>
-          ${meta ? `<span class="night-card-meta">${escapeHtml(meta)}</span>` : ""}
+          ${head.meta ? `<span class="night-card-meta">${escapeHtml(head.meta)}</span>` : ""}
         </header>
-        <div class="night-card-metrics">${pair
-          .map(
-            (fact, fi) => `<div>
+        ${head.facts.length
+          ? `<div class="night-card-metrics">${head.facts
+              .map(
+                (fact, fi) => `<div>
             <b class="${fact.accent || fi === 0 ? "accent" : ""}">${escapeHtml(fmtStat(fact.value))}</b>
             <span>${escapeHtml(fact.label)}</span>
           </div>`,
-          )
-          .join("")}</div>
+              )
+              .join("")}</div>`
+          : ""}
         <div class="night-card-chart" data-night-chart="${i}">${chart}</div>
         ${renderCardWorkup(r.workup, `night-${i}`)}
       </article>`;
@@ -887,16 +917,18 @@ function showPatternPane(id) {
   const view = nightView(f, t);
   pane.innerHTML = `${nightHead(t, view.items.length)}${nightPreviewCards(view.items, view)}`;
   registerWorkups(nightCardWorkups(view.items));
-  bindNightCharts(pane, view.items, t.name);
+  bindNightCharts(pane, view, t.name);
 }
 
-function bindNightCharts(root, items, kindName) {
+function bindNightCharts(root, view, kindName) {
+  const items = view.items || [];
   root.querySelectorAll("[data-night-chart]").forEach((el) => {
     const row = items[Number(el.dataset.nightChart)];
     if (!row?.series || row.series.length < 2) return;
     el.querySelector("[data-enlarge]")?.addEventListener("click", () => {
       state.timeSeries = row.series;
-      state.timeChartTitle = `${row.state || "State"} · ${kindName || "night-of count"}`;
+      state.timeChartHead = nightCardHead(row, view);
+      state.timeChartTitle = state.timeChartHead.state;
       state.timeChartMark = row.timestamp || null;
       openTimePopup();
     });
@@ -1562,11 +1594,28 @@ function openTimePopup() {
   const body = $("chart-modal-body");
   const sub = $("chart-modal-sub");
   if (!modal || !body) return;
+  const head = state.timeChartHead;
+  const facts = $("chart-modal-facts");
   if ($("chart-modal-title")) {
-    $("chart-modal-title").textContent = state.timeChartTitle || "Votes over time";
+    $("chart-modal-title").textContent = head?.state || state.timeChartTitle || "Votes over time";
   }
   if (sub) {
-    sub.textContent = `${series.length} snapshots · hover or click a point to highlight that row`;
+    if (head) {
+      sub.textContent = "";
+      sub.hidden = true;
+    } else {
+      sub.hidden = false;
+      sub.textContent = `${series.length} snapshots · hover or click a point to highlight that row`;
+    }
+  }
+  if (facts) {
+    if (head) {
+      facts.hidden = false;
+      facts.innerHTML = nightFactsHtml(head);
+    } else {
+      facts.hidden = true;
+      facts.innerHTML = "";
+    }
   }
   const n = names();
   const pts = chartPoints(series);
@@ -1833,6 +1882,7 @@ async function loadStateRace(row) {
       bindTimeChartHover(chartRoot, series);
       chartRoot.querySelector("[data-enlarge]")?.addEventListener("click", () => {
         state.timeChartMark = null;
+        state.timeChartHead = null;
         openTimePopup();
       });
     }

@@ -1773,6 +1773,27 @@ th {
   margin-bottom: 0.75rem;
 }
 .chart-modal-head h2 { margin: 0; font-size: 1.15rem; letter-spacing: -0.03em; }
+.night-popup-facts {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+  max-width: 28rem;
+}
+.night-popup-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.night-popup-facts .night-card-metrics b { font-size: 1.25rem; }
+.night-popup-facts .night-card-meta {
+  padding-top: 0;
+  font-size: 0.78rem;
+}
 .chart-point-table { max-height: 240px; margin-top: 0.85rem; }
 .chart-point-table tbody tr,
 .data-table.chart-points tbody tr { cursor: pointer; }

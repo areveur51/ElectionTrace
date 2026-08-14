@@ -73,6 +73,11 @@ test("night-of preview cards include proof of work under the chart", () => {
   assert.match(js, /renderProofFold\(w, key/);
   assert.match(js, /data-night-chart="\$\{i\}"[\s\S]{0,80}\$\{renderCardWorkup\(r\.workup/);
   assert.match(js, /registerWorkups\(nightCardWorkups\(view\.items\)\)/);
+  assert.match(js, /function nightCardHead\(/);
+  assert.match(js, /function nightFactsHtml\(/);
+  assert.match(js, /state\.timeChartHead = nightCardHead/);
+  assert.match(html, /id="chart-modal-facts"/);
+  assert.match(css, /\.night-popup-facts/);
   assert.doesNotMatch(
     js,
     /function showPatternPane[\s\S]{0,800}renderTableWorkup\(packet/,
