@@ -577,40 +577,105 @@ function nightCardWorkups(items) {
   return out;
 }
 
+function nightHead(t, n) {
+  const line = String(t.about || t.whyFlagged || t.note || "").trim();
+  const method = t.sameMethod ? state.methods.find((m) => m.id === t.sameMethod) : null;
+  const methodLine = method
+    ? `<p class="night-method-link">Same rule as <a href="#methods" data-method="${escapeHtml(method.id)}">${escapeHtml(method.name)}</a></p>`
+    : "";
+  return `<header class="night-method">
+    <div>
+      <h3>${escapeHtml(t.name)}</h3>
+      ${line ? `<p>${escapeHtml(line)}</p>` : ""}
+      ${methodLine}
+    </div>
+    <p class="night-method-count"><strong>${fmt(n)}</strong><span>${n === 1 ? "state" : "states"}</span></p>
+  </header>`;
+}
+
 function nightPreviewCards(items, opts) {
-  if (!items.length) return `<p class="muted">None</p>`;
-  return `<p class="page-note">${escapeHtml(opts.blurb)}</p>
-    <div class="stat-grid">${items
-      .map((r, i) => {
-        const facts = opts.facts
-          ? opts.facts(r)
-          : [
-              { label: "Biden", value: r.demGain, accent: true },
-              { label: "Trump", value: r.repGain },
-            ];
-        const extra = facts.slice(2);
-        const pair = facts.slice(0, 2);
-        const chart =
-          r.series && r.series.length >= 2
-            ? renderTimeChart(r.series, { bare: true, preview: true, hideOther: true, thin: true, markT: r.timestamp })
-            : `<p class="muted">No series window.</p>`;
-        return `<article class="stat-card">
-          <h4>${escapeHtml(r.state || "—")}</h4>
-          <p class="stat-sub">${escapeHtml(opts.sub(r))}</p>
-          <div class="stat-metrics">${pair
-            .map(
-              (fact, fi) => `<div>
-              <b class="${fact.accent || fi === 0 ? "accent" : ""}">${escapeHtml(fmtStat(fact.value))}</b>
-              <span>${escapeHtml(fact.label)}</span>
-            </div>`,
-            )
-            .join("")}</div>
-          ${extra.length ? `<p class="stat-extra">${extra.map((f) => `${escapeHtml(f.label)} ${escapeHtml(fmtStat(f.value))}`).join(" · ")}</p>` : ""}
-          <div data-night-chart="${i}">${chart}</div>
-          ${renderCardWorkup(r.workup, `night-${i}`)}
-        </article>`;
-      })
-      .join("")}</div>`;
+  if (!items.length) return `<p class="night-empty">None on this extract.</p>`;
+  return `<div class="night-grid">${items
+    .map((r, i) => {
+      const facts = opts.facts
+        ? opts.facts(r)
+        : [
+            { label: "Biden", value: r.demGain, accent: true },
+            { label: "Trump", value: r.repGain },
+          ];
+      const pair = facts.slice(0, 2);
+      const meta = opts.meta ? opts.meta(r) : "";
+      const chart =
+        r.series && r.series.length >= 2
+          ? renderTimeChart(r.series, { bare: true, preview: true, hideOther: true, thin: true, markT: r.timestamp })
+          : `<p class="muted">No series window.</p>`;
+      return `<article class="night-card">
+        <header class="night-card-head">
+          <div>
+            <h4>${escapeHtml(r.state || "—")}</h4>
+            <p>${escapeHtml(opts.sub(r))}</p>
+          </div>
+          ${meta ? `<span class="night-card-meta">${escapeHtml(meta)}</span>` : ""}
+        </header>
+        <div class="night-card-metrics">${pair
+          .map(
+            (fact, fi) => `<div>
+            <b class="${fact.accent || fi === 0 ? "accent" : ""}">${escapeHtml(fmtStat(fact.value))}</b>
+            <span>${escapeHtml(fact.label)}</span>
+          </div>`,
+          )
+          .join("")}</div>
+        <div class="night-card-chart" data-night-chart="${i}">${chart}</div>
+        ${renderCardWorkup(r.workup, `night-${i}`)}
+      </article>`;
+    })
+    .join("")}</div>`;
+}
+
+function nightView(f, t) {
+  const id = t.id;
+  if (id === "feed_retraction") {
+    return {
+      items: f.retractions || [],
+      sub: (r) => `${fmt(r.from)} → ${fmt(r.to)}`,
+      meta: (r) => (r.eevp != null ? `${r.eevp}% in` : ""),
+    };
+  }
+  if (id === "implied_negative_candidate") {
+    return {
+      items: (f.errors || []).filter((e) => e.kind === "implied_negative_candidate"),
+      sub: (r) => `${r.who} ${fmt(r.worst)}`,
+      meta: (r) => `${r.n} update${r.n === 1 ? "" : "s"}`,
+    };
+  }
+  if (id === "eevp_backwards") {
+    return {
+      items: (f.errors || []).filter((e) => e.kind === "eevp_backwards"),
+      sub: (r) => `${r.from}% → ${r.to}%`,
+      meta: (r) => (r.delta != null ? signedDelta(r.delta) : ""),
+      facts: (r) => [
+        { label: "From", value: `${r.from}%` },
+        { label: "To", value: `${r.to}%` },
+      ],
+    };
+  }
+  if (id === "lead_flip") {
+    const who = (pp) => (pp > 0 ? "Biden" : "Trump");
+    return {
+      items: f.flips || [],
+      sub: (r) =>
+        `${who(r.leadFrom)} ${Math.abs(r.leadFrom)}pp → ${who(r.leadTo)} ${Math.abs(r.leadTo)}pp`,
+      meta: (r) => (r.eevp != null ? `${r.eevp}% in` : ""),
+    };
+  }
+  if (id === "onesided_dump") {
+    return {
+      items: f.dumps || [],
+      sub: (r) => `${r.who} ${r.share}% of +${fmt(r.delta)}`,
+      meta: (r) => (r.eevp != null ? `${r.eevp}% in` : ""),
+    };
+  }
+  return { items: nightItems(f, id), sub: () => "" };
 }
 
 function nightItems(f, id) {
@@ -819,10 +884,10 @@ function showPatternPane(id) {
   $("pattern-switch")?.querySelectorAll("button").forEach((btn) => {
     btn.addEventListener("click", () => showPatternPane(btn.dataset.type));
   });
-  const items = nightItems(f, t.id);
-  pane.innerHTML = `${paneHead(t)}${fileTable(f, t.id)}`;
-  registerWorkups(nightCardWorkups(items));
-  bindNightCharts(pane, items, t.name);
+  const view = nightView(f, t);
+  pane.innerHTML = `${nightHead(t, view.items.length)}${nightPreviewCards(view.items, view)}`;
+  registerWorkups(nightCardWorkups(view.items));
+  bindNightCharts(pane, view.items, t.name);
 }
 
 function bindNightCharts(root, items, kindName) {

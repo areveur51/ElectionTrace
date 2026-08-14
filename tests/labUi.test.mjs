@@ -72,10 +72,29 @@ test("night-of preview cards include proof of work under the chart", () => {
   assert.match(js, /function renderCardWorkup\(/);
   assert.match(js, /renderProofFold\(w, key/);
   assert.match(js, /data-night-chart="\$\{i\}"[\s\S]{0,80}\$\{renderCardWorkup\(r\.workup/);
-  assert.match(js, /registerWorkups\(nightCardWorkups\(items\)\)/);
+  assert.match(js, /registerWorkups\(nightCardWorkups\(view\.items\)\)/);
   assert.doesNotMatch(
     js,
     /function showPatternPane[\s\S]{0,800}renderTableWorkup\(packet/,
+  );
+});
+
+test("night-of page uses a slim method header, not three explain cards", () => {
+  assert.match(html, /class="page page-wide page-night"/);
+  assert.match(js, /function nightHead\(/);
+  assert.match(js, /function nightView\(/);
+  assert.match(js, /class="night-method"/);
+  assert.match(js, /class="night-card"/);
+  assert.match(js, /class="night-grid"/);
+  assert.match(css, /\.night-grid\s*\{/);
+  assert.match(css, /\.night-card\s*\{/);
+  assert.doesNotMatch(
+    js,
+    /function showPatternPane[\s\S]{0,500}paneHead\(/,
+  );
+  assert.doesNotMatch(
+    js,
+    /function showPatternPane[\s\S]{0,500}explainCards\(/,
   );
 });
 
@@ -132,7 +151,7 @@ test("In the files and Night-of count use wrap pills, not a sidebar", () => {
   assert.match(js, /function renderCountPills[\s\S]{0,400}lab-method-pill/);
   assert.doesNotMatch(js, /function renderTypeSwitch[\s\S]{0,600}board-row/);
   assert.match(html, /lab-method-board" id="file-switch"/);
-  assert.match(html, /lab-method-board" id="pattern-switch"/);
+  assert.match(html, /lab-method-board night-pills" id="pattern-switch"/);
   assert.doesNotMatch(html, /id="files"[\s\S]{0,500}board-split/);
   assert.doesNotMatch(html, /id="patterns"[\s\S]{0,500}board-split/);
   assert.match(html, /id="files"[\s\S]{0,200}page-wide/);
