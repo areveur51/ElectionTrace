@@ -47,6 +47,8 @@ There is no per-item URL. Open the same card (same state, same rule) and click *
 
 Those packets hash the night-file inputs (timestamps, implied votes, county vs state totals) and the detector checks, not the raw `pennsylvania.json` bytes.
 
+`feed_vote_switch` is the night-of form of precinct `vote_transfer`: opposite implied moves of 5,000 or more, leftover and Δtotal within 1,000 of that 5,000-vote band. Compare `sha256` on **Implied votes moved between candidates**.
+
 ## 4. Coverage
 
 On **Coverage**, open the proof JSON. The digest is over the expected 51 jurisdictions vs which precinct and night files are present.

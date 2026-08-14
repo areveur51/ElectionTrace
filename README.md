@@ -15,13 +15,13 @@ media/*.geojson.gz  →  index  →  map + table + night-of charts
 - Browse flagged precincts on a map (county presidential winner overlay on by default)
 - Filter by state, method, and search
 - Open a precinct: votes first, then county night totals, then the state series
-- Night-of count: retractions, lead changes, one-sided dumps
+- Night-of count: retractions, implied vote-switches, lead changes, one-sided dumps
 - In the files: sort order and county-vs-state totals
 - Copy or download a JSON proof packet for any item
 
 ## Screenshots
 
-Precinct lab — national map with county presidential winner overlay (on by default). Flagged counts follow the state, method, and search filters. Overlay totals skip precincts with zero reported votes.
+Precinct lab — national map with county presidential winner overlay (on by default). Flagged counts follow the state, method, and search filters. Overlay totals skip precincts with zero reported votes. Plus / minus / net candidate votes are the two-party totals in those same flags; they change as more anomalies enter the filter.
 
 ![Precinct lab — United States](docs/screenshots/precinct-lab-united-states.png)
 
@@ -37,7 +37,7 @@ Same lab, one state at a time. The right pane is precinct first, then county nig
 
 ![Precinct lab — Pennsylvania](docs/screenshots/precinct-lab-pennsylvania.png)
 
-Night-of — county first-report charts and a proof-of-work fold under each preview.
+Night-of — one pattern at a time, compact state cards, enlarge a chart for the same facts and the anomaly line. **Implied votes moved between candidates** is the flat (or near-flat) share×total swap; a small total drop can still land there if the leftover is within 1,000 of that band.
 
 ![Night-of — Pennsylvania](docs/screenshots/night-of-pennsylvania.png)
 
@@ -96,6 +96,8 @@ Every rule is listed in the app under **Methods** and in `app/lib/methods.mjs`. 
 
 Over-time rules (`vote_transfer`, `count_retraction`, `one_sided_increment`) stay quiet unless the Feature has `votes_*_prev` or a `history` array.
 
+Night-of runs the same comparisons on the state feed. A matched implied swap is `feed_vote_switch` (Methods: **Votes moved between candidates** lists those states). A one-sided implied loss stays `implied_negative_candidate`.
+
 The SHA-256 on **View JSON** is a checksum of that detector packet. How to re-run it: [`docs/REPRODUCE.md`](docs/REPRODUCE.md).
 
 ## HTTP API
@@ -111,6 +113,7 @@ The SHA-256 on **View JSON** is a checksum of that detector packet. How to re-ru
 | `GET /api/precincts/:geoid/workup` | Proof-of-work packet |
 | `GET /api/race?state=42&county=42001` | Night-file race + county |
 | `GET /api/county-winners` | County presidential winners |
+| `GET /api/anomalies-by-winner?...` | Overlay tally: flagged counts by county winner, plus / minus / net candidate votes |
 
 ## Configuration
 
