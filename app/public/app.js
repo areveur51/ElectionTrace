@@ -171,6 +171,12 @@ function methodHitCount(id) {
   return Number(state.summary?.byType?.[id]) || 0;
 }
 
+function methodNightCount(m) {
+  return (m.sameAs || [])
+    .filter((l) => l.tab === "patterns")
+    .reduce((sum, l) => sum + typeCount(state.findings || {}, l.id), 0);
+}
+
 function labMethods() {
   return (state.methods || []).filter((m) => methodHitCount(m.id) > 0);
 }
@@ -268,7 +274,9 @@ function fillMethodBoard() {
   const pane = $("method-pane");
   if (!el || !pane) return;
   const ranked = [...(state.methods || [])].sort(
-    (a, b) => methodHitCount(b.id) - methodHitCount(a.id) || String(a.name).localeCompare(String(b.name)),
+    (a, b) =>
+      methodHitCount(b.id) + methodNightCount(b) - (methodHitCount(a.id) + methodNightCount(a)) ||
+      String(a.name).localeCompare(String(b.name)),
   );
   if (!ranked.length) return;
   if (!state.methodId || !ranked.some((m) => m.id === state.methodId)) {
@@ -276,7 +284,7 @@ function fillMethodBoard() {
   }
   el.innerHTML = ranked
     .map((m) => {
-      const n = methodHitCount(m.id);
+      const n = methodHitCount(m.id) + methodNightCount(m);
       const active = m.id === state.methodId;
       return `<button type="button" data-method-pick="${escapeHtml(m.id)}" class="lab-method-pill${active ? " active" : ""}" aria-selected="${active ? "true" : "false"}">
         <span class="lab-method-pill-name">${escapeHtml(m.name)}</span>
@@ -295,7 +303,13 @@ function fillMethodBoard() {
   pane.innerHTML = ranked
     .map((m) => {
       const n = methodHitCount(m.id);
+      const nightN = methodNightCount(m);
       const group = GROUP_LABEL[m.group] || m.group || "";
+      const countLine = n
+        ? `${fmt(n)} flagged${nightN ? ` · ${fmt(nightN)} night-of` : ""}`
+        : nightN
+          ? `${fmt(nightN)} night-of`
+          : "0 flagged";
       const extra =
         m.group === "temporal"
           ? `<p class="method-card-note">How the count moved — same comparisons as Night-of count.</p>`
@@ -304,11 +318,12 @@ function fillMethodBoard() {
       return `<article class="method-card${on ? " active" : ""}" id="method-card-${escapeHtml(m.id)}">
         <header class="method-card-head">
           <h3><span class="dot" style="background:${m.color}"></span>${escapeHtml(m.name)}</h3>
-          <p class="method-card-meta">${fmt(n)} flagged · ${escapeHtml(group)}</p>
+          <p class="method-card-meta">${countLine} · ${escapeHtml(group)}</p>
         </header>
         ${explainCards(m.plain)}
         ${extra}
         ${seenInBlock(m)}
+        ${nightHitsHtml(m)}
         ${formatRuleHtml(m.rule || "")}
       </article>`;
     })
@@ -381,6 +396,36 @@ function seenInBlock(m) {
     })
     .join("");
   return `<div class="seen-in"><p>Same comparison in the night files</p><ul>${items}</ul></div>`;
+}
+
+function nightHitsHtml(m) {
+  const f = state.findings;
+  if (!f || !m.sameAs?.length) return "";
+  const blocks = [];
+  for (const link of m.sameAs) {
+    if (link.tab !== "patterns") continue;
+    const items = nightItems(f, link.id);
+    if (!items.length) continue;
+    const t = allFindingTypes(f).find((x) => x.id === link.id);
+    const rows = items
+      .map((r) => {
+        const bits = [];
+        if (r.demGain != null) bits.push(`Biden ${fmtStat(r.demGain)}`);
+        if (r.repGain != null) bits.push(`Trump ${fmtStat(r.repGain)}`);
+        return `<li>
+          <a href="#patterns" data-finding="${escapeHtml(link.id)}" data-tab="patterns">${escapeHtml(r.state || "—")}</a>
+          ${bits.length ? `<span>${bits.join(" · ")}</span>` : ""}
+        </li>`;
+      })
+      .join("");
+    blocks.push(
+      `<div class="method-night-hits">
+        <p>${escapeHtml(t?.name || link.id)}</p>
+        <ul>${rows}</ul>
+      </div>`,
+    );
+  }
+  return blocks.join("");
 }
 
 function dataPanel(opts) {

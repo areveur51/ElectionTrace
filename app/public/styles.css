@@ -671,6 +671,38 @@ body:not([data-section="methods"]) #methods {
   padding-left: 1.1rem;
 }
 
+.method-night-hits {
+  margin: 0.85rem 0 0.35rem;
+  max-width: 52ch;
+}
+.method-night-hits p {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.method-night-hits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.28rem;
+}
+.method-night-hits li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.7rem;
+  font-size: 0.84rem;
+}
+.method-night-hits a { color: var(--accent); text-decoration: none; }
+.method-night-hits a:hover { text-decoration: underline; }
+.method-night-hits span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 720px) {
   .coverage-split { grid-template-columns: 1fr; }
   .stats { flex-wrap: wrap; }

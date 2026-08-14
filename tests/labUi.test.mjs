@@ -93,6 +93,8 @@ test("night-of page uses a slim method header, not three explain cards", () => {
   assert.match(js, /function nightHead\(/);
   assert.match(js, /function nightView\(/);
   assert.match(js, /id === "feed_vote_switch"/);
+  assert.match(js, /function nightHitsHtml\(/);
+  assert.match(css, /\.method-night-hits/);
   assert.match(js, /class="night-method"/);
   assert.match(js, /class="night-card"/);
   assert.match(js, /class="night-grid"/);
