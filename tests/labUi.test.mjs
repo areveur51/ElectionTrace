@@ -76,6 +76,8 @@ test("night-of preview cards include proof of work under the chart", () => {
   assert.match(js, /function nightCardHead\(/);
   assert.match(js, /function nightFactsHtml\(/);
   assert.match(js, /state\.timeChartHead = nightCardHead/);
+  assert.match(js, /night-popup-why/);
+  assert.match(js, /findingSummary\(type\)/);
   assert.match(html, /id="chart-modal-facts"/);
   assert.match(css, /\.night-popup-facts/);
   assert.doesNotMatch(

@@ -601,11 +601,14 @@ function nightCardHead(row, opts = {}) {
         { label: "Biden", value: row.demGain, accent: true },
         { label: "Trump", value: row.repGain },
       ];
+  const type = opts.type || row.workup?.type || row.kind || "";
   return {
     state: row.state || "—",
+    kind: opts.kind || "",
     sub: opts.sub ? opts.sub(row) : "",
     meta: opts.meta ? opts.meta(row) : "",
     facts: facts.slice(0, 2),
+    why: proofSummary(row.workup) || findingSummary(type) || "",
   };
 }
 
@@ -619,13 +622,15 @@ function nightFactsHtml(head) {
       </div>`,
     )
     .join("");
-  return `${head.sub || head.meta
-    ? `<p class="night-popup-line">
+  return `${head.kind ? `<p class="night-popup-kind">${escapeHtml(head.kind)}</p>` : ""}
+    ${head.sub || head.meta
+      ? `<p class="night-popup-line">
         ${head.sub ? `<span>${escapeHtml(head.sub)}</span>` : ""}
         ${head.meta ? `<span class="night-card-meta">${escapeHtml(head.meta)}</span>` : ""}
       </p>`
-    : ""}
-    ${metrics ? `<div class="night-card-metrics">${metrics}</div>` : ""}`;
+      : ""}
+    ${metrics ? `<div class="night-card-metrics">${metrics}</div>` : ""}
+    ${head.why ? `<p class="night-popup-why">${escapeHtml(head.why)}</p>` : ""}`;
 }
 
 function nightPreviewCards(items, opts) {
@@ -917,17 +922,21 @@ function showPatternPane(id) {
   const view = nightView(f, t);
   pane.innerHTML = `${nightHead(t, view.items.length)}${nightPreviewCards(view.items, view)}`;
   registerWorkups(nightCardWorkups(view.items));
-  bindNightCharts(pane, view, t.name);
+  bindNightCharts(pane, view, t);
 }
 
-function bindNightCharts(root, view, kindName) {
+function bindNightCharts(root, view, t) {
   const items = view.items || [];
   root.querySelectorAll("[data-night-chart]").forEach((el) => {
     const row = items[Number(el.dataset.nightChart)];
     if (!row?.series || row.series.length < 2) return;
     el.querySelector("[data-enlarge]")?.addEventListener("click", () => {
       state.timeSeries = row.series;
-      state.timeChartHead = nightCardHead(row, view);
+      state.timeChartHead = nightCardHead(row, {
+        ...view,
+        kind: t?.name || "",
+        type: t?.id || row.kind || row.workup?.type,
+      });
       state.timeChartTitle = state.timeChartHead.state;
       state.timeChartMark = row.timestamp || null;
       openTimePopup();
