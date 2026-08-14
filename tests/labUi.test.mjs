@@ -96,7 +96,9 @@ test("night-of page uses a slim method header, not three explain cards", () => {
   assert.match(js, /class="night-card"/);
   assert.match(js, /class="night-grid"/);
   assert.match(css, /\.night-grid\s*\{/);
+  assert.match(css, /minmax\(16\.5rem/);
   assert.match(css, /\.night-card\s*\{/);
+  assert.match(js, /preview \? 68/);
   assert.doesNotMatch(
     js,
     /function showPatternPane[\s\S]{0,500}paneHead\(/,

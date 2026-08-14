@@ -1339,8 +1339,8 @@ function renderTimeChart(series, opts) {
   const timed = pts.every((p) => p.ms != null);
   const tmin = timed ? Math.min(...pts.map((p) => p.ms)) : 0;
   const tmax = timed ? Math.max(...pts.map((p) => p.ms)) : pts.length - 1;
-  const w = large ? 1000 : preview ? 260 : 420;
-  const h = large ? 440 : preview ? 92 : 210;
+  const w = large ? 1000 : preview ? 240 : 420;
+  const h = large ? 440 : preview ? 68 : 210;
   const pad = large
     ? { l: 58, r: 36, t: 16, b: 92 }
     : preview
