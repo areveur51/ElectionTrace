@@ -1,0 +1,20 @@
+# One command: docker compose up --build
+# Open http://127.0.0.1:5200
+#
+# Optional national extract (not in git):
+#   ./scripts/fetch-data.sh
+# Then compose bind-mounts ./media over the image sample.
+services:
+  electiontrace:
+    build: .
+    ports:
+      - "5200:5200"
+    environment:
+      PORT: "5200"
+      HOST: "0.0.0.0"
+      MEDIA_DIR: /app/media
+      DATA_DIR: /app/data
+    volumes:
+      - ./media:/app/media
+      - ./data:/app/data
+    restart: unless-stopped

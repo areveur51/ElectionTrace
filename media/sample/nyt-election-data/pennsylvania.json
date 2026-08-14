@@ -1,0 +1,67 @@
+{
+  "data": {
+    "races": [
+      {
+        "state_id": "PA",
+        "state_name": "Pennsylvania",
+        "office": "President",
+        "election_date": "2020-11-03",
+        "votes": 2800,
+        "eevp": 99,
+        "leader_margin_name_display": "Biden +8",
+        "candidates": [
+          {
+            "candidate_key": "bidenj",
+            "name_display": "Joseph R. Biden Jr.",
+            "last_name": "Biden",
+            "party_id": "democrat",
+            "votes": 1512,
+            "percent": 54,
+            "winner": true
+          },
+          {
+            "candidate_key": "trumpd",
+            "name_display": "Donald J. Trump",
+            "last_name": "Trump",
+            "party_id": "republican",
+            "votes": 1232,
+            "percent": 44,
+            "winner": false
+          }
+        ],
+        "counties": [
+          {
+            "fips": "42101",
+            "name": "Philadelphia",
+            "votes": 1520,
+            "results": { "bidenj": 1312, "trumpd": 190 },
+            "leader_margin_name_display": "Biden +74",
+            "leader_party_id": "democrat"
+          },
+          {
+            "fips": "42001",
+            "name": "Adams",
+            "votes": 1280,
+            "results": { "bidenj": 200, "trumpd": 1042 },
+            "leader_margin_name_display": "Trump +66",
+            "leader_party_id": "republican"
+          }
+        ],
+        "timeseries": [
+          {
+            "timestamp": "2020-11-04T00:00:00Z",
+            "votes": 800,
+            "eevp": 20,
+            "vote_shares": { "bidenj": 0.42, "trumpd": 0.56 }
+          },
+          {
+            "timestamp": "2020-11-04T06:00:00Z",
+            "votes": 2800,
+            "eevp": 99,
+            "vote_shares": { "bidenj": 0.54, "trumpd": 0.44 }
+          }
+        ]
+      }
+    ]
+  }
+}

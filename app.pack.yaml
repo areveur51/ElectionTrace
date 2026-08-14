@@ -1,0 +1,25 @@
+# App contract for GrokBuild / CommandCenter. Safe to commit (no secrets).
+name: "ElectionTrace"
+id: electiontrace
+runtime: node22
+ctl: electiontracectl.sh
+start: ./electiontracectl.sh start
+stop: ./electiontracectl.sh stop
+port: 5200
+openScheme: http
+database:
+  name: electiontrace
+  shared: true
+  port: 5433
+media:
+  root: ./media
+paths:
+  data: ./data
+  media: ./media
+  tls: ./tls
+  app: ./app
+migrate:
+  class: pg-and-fs
+  dbName: electiontrace
+  dataPaths:
+    - ./media

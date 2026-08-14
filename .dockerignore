@@ -1,0 +1,15 @@
+node_modules
+.git
+.env
+.env.*
+*.log
+*.pid
+*.supervise.pid
+data/*
+tls/*.key
+tls/*.crt
+media/*.gz
+media/*.geojson
+media/nyt-election-data
+docs
+tests

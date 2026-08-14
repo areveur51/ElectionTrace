@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Local secrets and machine config — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+auth.json
+
+# Process / logs
+*.log
+*.pid
+*.supervise.pid
+
+# Generated index
+data/*
+!data/.gitkeep
+
+# Operator data dumps (too large / not the app)
+media/*
+!media/README.md
+!media/sample/
+!media/sample/**
+
+# Local TLS material
+tls/*.key
+tls/*.crt
+
+.DS_Store

@@ -1,0 +1,78 @@
+{
+  "type": "FeatureCollection",
+  "name": "electiontrace-sample",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42101-demo-1",
+        "votes_dem": 812,
+        "votes_rep": 190,
+        "votes_total": 1020,
+        "votes_per_sqkm": 420,
+        "pct_dem_lead": 61
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.1652, 39.9526] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42101-demo-2",
+        "votes_dem": 0,
+        "votes_rep": 0,
+        "votes_total": 0,
+        "votes_per_sqkm": 0,
+        "pct_dem_lead": 0
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.17, 39.96] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42001-demo-1",
+        "votes_dem": 180,
+        "votes_rep": 740,
+        "votes_total": 930,
+        "votes_per_sqkm": 38,
+        "pct_dem_lead": -60
+      },
+      "geometry": { "type": "Point", "coordinates": [-77.2, 39.87] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42001-demo-2",
+        "votes_dem": 400,
+        "votes_rep": 400,
+        "votes_total": 810,
+        "votes_per_sqkm": 22,
+        "pct_dem_lead": 0
+      },
+      "geometry": { "type": "Point", "coordinates": [-77.22, 39.88] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42001-demo-3",
+        "votes_dem": 1111,
+        "votes_rep": 222,
+        "votes_total": 1400,
+        "votes_per_sqkm": 18,
+        "pct_dem_lead": 63.5
+      },
+      "geometry": { "type": "Point", "coordinates": [-77.18, 39.86] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "GEOID": "42101-demo-3",
+        "votes_dem": 500,
+        "votes_rep": 80,
+        "votes_total": 500,
+        "votes_per_sqkm": 90,
+        "pct_dem_lead": 84
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.16, 39.94] }
+    }
+  ]
+}
