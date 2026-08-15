@@ -151,6 +151,8 @@ test("Precinct lab map has a county presidential winner overlay control", () => 
   assert.match(js, /\/api\/county-winners/);
   assert.match(js, /\/api\/anomalies-by-winner/);
   assert.match(js, /map-legend-votes/);
+  assert.match(js, /Anomalies by county winner/);
+  assert.doesNotMatch(js, /2020 president/);
   assert.match(js, /tally\?\.votes/);
   assert.match(js, /Plus, minus, and net votes change as more anomalies are detected/);
   assert.match(readFileSync(join(root, "app/server.mjs"), "utf8"), /excludeZeroVotes:\s*true/);

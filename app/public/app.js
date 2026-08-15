@@ -2053,8 +2053,8 @@ function fillCountyLegend(packet, tally) {
   }
   const dem = packet?.dem?.last || names().demShort || "Dem";
   const rep = packet?.rep?.last || names().repShort || "Rep";
-  const year = String(packet?.election_date || "2020").slice(0, 4);
   const kind = tally?.flaggedOnly === false ? "precincts" : "flagged";
+  const title = tally?.flaggedOnly === false ? "Precincts by county winner" : "Anomalies by county winner";
   const voteLine = (side) => {
     const v = tally?.votes?.[side];
     if (!v) return "";
@@ -2072,7 +2072,7 @@ function fillCountyLegend(packet, tally) {
     : `<div class="map-legend-row"><i class="dem"></i>${escapeHtml(dem)}</div>
     <div class="map-legend-row"><i class="rep"></i>${escapeHtml(rep)}</div>
     <p>Counting ${kind} by county winner…</p>`;
-  box.innerHTML = `<strong>${escapeHtml(year)} president</strong>${counts}`;
+  box.innerHTML = `<strong>${escapeHtml(title)}</strong>${counts}`;
   box.hidden = false;
   box.classList.remove("hidden");
 }
